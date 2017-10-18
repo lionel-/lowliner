@@ -18,8 +18,8 @@ Imports:
 Suggests:
     testthat,
     dplyr (>= 0.4)
-LinkingTo: Rcpp,
-    dplyr,
+LinkingTo:
+    Rcpp,
     BH
 URL: https://github.com/hadley/purrr
 BugReports: https://github.com/hadley/purrr/issues
