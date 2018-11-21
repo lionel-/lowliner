@@ -19,7 +19,11 @@ objects, a string indicating the name of a logical element in the
 inner lists. Only those elements where \code{.p} evaluates to
 \code{TRUE} will be modified.}
 
-\item{...}{Additional arguments passed on to \code{.f}.}
+\item{...}{Additional arguments passed on to \code{.f}.
+
+These dots support \link[rlang:list2]{tidy dots} features. In
+particular, if your arguments are stored in a list, you can
+splice that in with \code{!!!}.}
 }
 \value{
 A logical vector of length 1.

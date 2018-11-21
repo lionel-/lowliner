@@ -54,7 +54,11 @@ and name at different levels. Within a list, wrap strings in \code{\link[=get-at
 to extract named attributes. If a component is not present, the value of
 \code{.default} will be returned.}
 
-\item{...}{Additional arguments passed on to \code{.f}.}
+\item{...}{Additional arguments passed on to \code{.f}.
+
+These dots support \link[rlang:list2]{tidy dots} features. In
+particular, if your arguments are stored in a list, you can
+splice that in with \code{!!!}.}
 
 \item{.id}{Either a string or \code{NULL}. If a string, the output will contain
 a variable with that name, storing either the name (if \code{.x} is named) or

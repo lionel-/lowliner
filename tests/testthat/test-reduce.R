@@ -25,6 +25,20 @@ test_that("reduce_right equivalent to reversing input", {
   expect_equal(reduce_right(x, c, .init = 7), c(7, 6, 5, 4, 3, 2, 1))
 })
 
+test_that("reduce() forwards dots", {
+  out <- reduce(1:2, list, "foo", .init = "init")
+  exp <- list(list("init", 1L, "foo"), 2L, "foo")
+  expect_identical(out, exp)
+
+  out <- reduce(1:2, list, !!!list("foo", "bar"), .init = "init")
+  exp <- list(list("init", 1L, "foo", "bar"), 2L, "foo", "bar")
+  expect_identical(out, exp)
+
+  out <- reduce2(1:2, 3:4, list, .init = "init", .init := "INIT")
+  exp <- list(list("init", 1L, 3L, .init = "INIT"), 2L, 4L, .init = "INIT")
+  expect_identical(out, exp)
+})
+
 # accumulate --------------------------------------------------------------
 
 test_that("accumulate passes arguments to function", {
@@ -38,6 +52,11 @@ test_that("accumulate keeps input names", {
   expect_identical(accumulate(input, sum), set_names(cumsum(1:26), letters))
   expect_identical(accumulate_right(input, sum), set_names(rev(cumsum(rev(1:26))), letters))
 })
+
+test_that("accumulate() forwards dots", {
+  TRUE
+})
+
 
 # reduce2 -----------------------------------------------------------------
 
@@ -61,4 +80,18 @@ test_that("reduce2_right works if lengths match", {
 test_that("reduce returns original input if it was length one", {
   x <- list(c(0, 1), c(2, 3), c(4, 5))
   expect_equal(reduce(x[1], paste), x[[1]])
+})
+
+test_that("reduce2() forwards dots", {
+  out <- reduce2(1:2, 3:4, list, "foo", .init = "init")
+  exp <- list(list("init", 1L, 3L, "foo"), 2L, 4L, "foo")
+  expect_identical(out, exp)
+
+  out <- reduce2(1:2, 3:4, list, !!!list("foo", "bar"), .init = "init")
+  exp <- list(list("init", 1L, 3L, "foo", "bar"), 2L, 4L, "foo", "bar")
+  expect_identical(out, exp)
+
+  out <- reduce2(1:2, 3:4, list, .init = "init", .init := "INIT")
+  exp <- list(list("init", 1L, 3L, .init = "INIT"), 2L, 4L, .init = "INIT")
+  expect_identical(out, exp)
 })

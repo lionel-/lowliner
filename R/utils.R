@@ -121,3 +121,27 @@ pairlist2 <- function(...) {
 value <- function(expr) {
   eval_bare(enexpr(expr), caller_env())
 }
+
+node_append <- function(node, new_tail) {
+  last <- node_last(node)
+  node_poke_cdr(last, new_tail)
+  node
+}
+
+node_last <- function(node) {
+  cdr <- node_cdr(node)
+
+  while (!is_null(cdr)) {
+    node <- cdr
+    cdr <- node_cdr(cdr)
+  }
+
+  node
+}
+
+quote_with_dots <- function(expr, dots) {
+  call <- substitute(expr)
+  call <- duplicate(call, shallow = TRUE)
+  node_append(call, dots)
+  call
+}

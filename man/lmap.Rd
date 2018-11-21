@@ -17,7 +17,11 @@ lmap_at(.x, .at, .f, ...)
 
 \item{.f}{A function that takes and returns a list or data frame.}
 
-\item{...}{Additional arguments passed on to \code{.f}.}
+\item{...}{Additional arguments passed on to \code{.f}.
+
+These dots support \link[rlang:list2]{tidy dots} features. In
+particular, if your arguments are stored in a list, you can
+splice that in with \code{!!!}.}
 
 \item{.p}{A single predicate function, a formula describing such a
 predicate function, or a logical vector of the same length as \code{.x}.

@@ -78,25 +78,32 @@ reduce2_impl <- function(.x, .y, .f, ..., .init, .left = TRUE) {
     stop("`.y` does not have length ", length(x_idx))
   }
 
-  .f <- as_mapper(.f, ...)
+  dots <- pairlist2(...)
+  .f <- dispatch_mapper(.f, dots)
+
+  reduce2_call <- quote_with_dots(.f(out, .x[[x_i]], .y[[y_i]]), dots)
+
   for (i in seq_along(x_idx)) {
     x_i <- x_idx[[i]]
     y_i <- y_idx[[i]]
 
-    out <- .f(out, .x[[x_i]], .y[[y_i]], ...)
+    out <- eval_bare(reduce2_call)
   }
 
   out
 }
 
-
 reduce_impl <- function(.x, .f, ..., .init, .left = TRUE) {
   out <- reduce_init(.x, .init, left = .left)
   idx <- reduce_index(.x, .init, left = .left)
 
-  .f <- as_mapper(.f, ...)
+  dots <- pairlist2(...)
+  .f <- dispatch_mapper(.f, dots)
+
+  reduce_call <- quote_with_dots(.f(out, .x[[i]]), dots)
+
   for (i in idx) {
-    out <- .f(out, .x[[i]], ...)
+    out <- eval_bare(reduce_call)
   }
 
   out
@@ -180,10 +187,13 @@ seq_len2 <- function(start, end) {
 #'     ggtitle("Simulations of a random walk with drift")
 #' }
 accumulate <- function(.x, .f, ..., .init) {
-  .f <- as_mapper(.f, ...)
+  dots <- pairlist2(...)
+  .f <- dispatch_mapper(.f, dots)
+
+  accumulate_call <- quote_with_dots(.f(x, y), dots)
 
   f <- function(x, y) {
-    .f(x, y, ...)
+    eval_bare(accumulate_call)
   }
 
   res <- Reduce(f, .x, init = .init, accumulate = TRUE)
