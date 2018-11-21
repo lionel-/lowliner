@@ -61,7 +61,11 @@ and name at different levels. Within a list, wrap strings in \code{\link[=get-at
 to extract named attributes. If a component is not present, the value of
 \code{.default} will be returned.}
 
-\item{...}{Additional arguments passed on to \code{.f}.}
+\item{...}{Additional arguments passed on to \code{.f}.
+
+These dots support \link[rlang:list2]{tidy dots} features. In
+particular, if your arguments are stored in a list, you can
+splice that in with \code{!!!}.}
 
 \item{.p}{A single predicate function, a formula describing such a
 predicate function, or a logical vector of the same length as \code{.x}.
@@ -179,6 +183,10 @@ mtcars \%>\%
   map_dfr(~ as.data.frame(t(as.matrix(coef(.)))))
 # (if you also want to preserve the variable names see
 # the broom package)
+
+# Splice a list of additional arguments with !!!
+args <- list(na.rm = TRUE, trim = 0)
+map(list(1:4, 11:14), mean, !!!args)
 }
 \seealso{
 Other map variants: \code{\link{imap}},

@@ -103,3 +103,23 @@ plucker <- function(i, default) {
     env = caller_env()
   )
 }
+
+# We need to pass a pre-spliced version of `...` to `as_mapper()`. Use
+# switchpatch to take care of common cases.
+dispatch_mapper <- function(.f, dots) {
+  switch(typeof(.f),
+    closure =
+      return(.f),
+    builtin = ,
+    special =
+      return(as_closure(.f)),
+    language =
+      if (is_formula(.f)) {
+        return(rlang::as_function(.f))
+      }
+  )
+
+  args <- new_node(.f, dots)
+  call <- new_language(quote(as_mapper), args)
+  eval_bare(call)
+}

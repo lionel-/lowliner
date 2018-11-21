@@ -38,6 +38,10 @@
 #'   positions to include, or a negative numeric vector of positions to
 #'   exlude. Only those elements corresponding to `.at` will be modified.
 #' @param ... Additional arguments passed on to `.f`.
+#'
+#'   These dots support [tidy dots][rlang::list2] features. In
+#'   particular, if your arguments are stored in a list, you can
+#'   splice that in with `!!!`.
 #' @return All functions return a vector the same length as `.x`.
 #'
 #'   `map()` returns a list, `map_lgl()` a logical vector, `map_int()` an
@@ -113,9 +117,14 @@
 #'   map_dfr(~ as.data.frame(t(as.matrix(coef(.)))))
 #' # (if you also want to preserve the variable names see
 #' # the broom package)
+#'
+#' # Splice a list of additional arguments with !!!
+#' args <- list(na.rm = TRUE, trim = 0)
+#' map(list(1:4, 11:14), mean, !!!args)
 map <- function(.x, .f, ...) {
-  .f <- as_mapper(.f, ...)
-  .Call(map_impl, environment(), ".x", ".f", "list")
+  dots <- pairlist2(...)
+  .f <- dispatch_mapper(.f, dots)
+  .Call(map_impl, environment(), ".x", ".f", "list", dots)
 }
 #' @rdname map
 #' @export
@@ -144,36 +153,41 @@ map_at <- function(.x, .at, .f, ...) {
 #' @rdname map
 #' @export
 map_lgl <- function(.x, .f, ...) {
-  .f <- as_mapper(.f, ...)
-  .Call(map_impl, environment(), ".x", ".f", "logical")
+  dots <- pairlist2(...)
+  .f <- dispatch_mapper(.f, dots)
+  .Call(map_impl, environment(), ".x", ".f", "logical", dots)
 }
 
 #' @rdname map
 #' @export
 map_chr <- function(.x, .f, ...) {
-  .f <- as_mapper(.f, ...)
-  .Call(map_impl, environment(), ".x", ".f", "character")
+  dots <- pairlist2(...)
+  .f <- dispatch_mapper(.f, dots)
+  .Call(map_impl, environment(), ".x", ".f", "character", dots)
 }
 
 #' @rdname map
 #' @export
 map_int <- function(.x, .f, ...) {
-  .f <- as_mapper(.f, ...)
-  .Call(map_impl, environment(), ".x", ".f", "integer")
+  dots <- pairlist2(...)
+  .f <- dispatch_mapper(.f, dots)
+  .Call(map_impl, environment(), ".x", ".f", "integer", dots)
 }
 
 #' @rdname map
 #' @export
 map_dbl <- function(.x, .f, ...) {
-  .f <- as_mapper(.f, ...)
-  .Call(map_impl, environment(), ".x", ".f", "double")
+  dots <- pairlist2(...)
+  .f <- dispatch_mapper(.f, dots)
+  .Call(map_impl, environment(), ".x", ".f", "double", dots)
 }
 
 #' @rdname map
 #' @export
 map_raw <- function(.x, .f, ...) {
-  .f <- as_mapper(.f, ...)
-  .Call(map_impl, environment(), ".x", ".f", "raw")
+  dots <- pairlist2(...)
+  .f <- dispatch_mapper(.f, dots)
+  .Call(map_impl, environment(), ".x", ".f", "raw", dots)
 }
 
 #' @rdname map

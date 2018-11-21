@@ -112,3 +112,12 @@ ndots <- function(...) nargs()
 is_names <- function(nms) {
   is_character(nms) && !any(is.na(nms) | nms == "")
 }
+
+# Should be replaced by a more efficient implementation in rlang
+pairlist2 <- function(...) {
+  as.pairlist(list2(...))
+}
+
+value <- function(expr) {
+  eval_bare(enexpr(expr), caller_env())
+}

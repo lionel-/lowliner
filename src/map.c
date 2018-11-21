@@ -57,7 +57,7 @@ SEXP call_loop(SEXP env, SEXP call, int n, SEXPTYPE type, int force_args) {
   return out;
 }
 
-SEXP map_impl(SEXP env, SEXP x_name_, SEXP f_name_, SEXP type_) {
+SEXP map_impl(SEXP env, SEXP x_name_, SEXP f_name_, SEXP type_, SEXP dots) {
   const char* x_name = CHAR(Rf_asChar(x_name_));
   const char* f_name = CHAR(Rf_asChar(f_name_));
 
@@ -79,9 +79,7 @@ SEXP map_impl(SEXP env, SEXP x_name_, SEXP f_name_, SEXP type_) {
   // bad tracebacks()
   SEXP Xi = PROTECT(Rf_lang3(R_Bracket2Symbol, x, i));
 
-  SEXP dots = Rf_cons(R_DotsSymbol, R_NilValue);
-  SEXP args = Rf_cons(Xi, dots);
-  SEXP f_call = PROTECT(Rf_lcons(f, args));
+  SEXP f_call = PROTECT(Rf_lcons(f, Rf_cons(Xi, dots)));
 
   SEXP out = PROTECT(call_loop(env, f_call, n, type, 1));
   copy_names(x_val, out);

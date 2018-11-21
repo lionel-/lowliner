@@ -6,8 +6,11 @@ test_that("preserves names", {
 })
 
 test_that("creates simple call", {
-  out <- map(1, function(x) sys.call())[[1]]
-  expect_equal(out, quote(.f(.x[[i]], ...)))
+  out <- map(1, call_inspect)[[1]]
+  expect_equal(out, quote(.f(.x[[i]])))
+
+  out <- map(1, call_inspect, 2)[[1]]
+  expect_equal(out, quote(.f(.x[[i]], 2)))
 })
 
 test_that("fails on non-vectors", {
@@ -91,4 +94,13 @@ test_that("map works with calls and pairlists", {
 
   out <- map(pairlist(1, 2), ~ . + 1)
   expect_equal(out, list(2, 3))
+})
+
+test_that("map() supports tidy dots", {
+  exp <- map(1:2, list, "foo", "bar")
+  out <- map(1:2, list, !!!list("foo", "bar"))
+  expect_identical(exp, out)
+
+  exp <- list(list(1L, .x = "foo"), list(2L, .x = "foo"))
+  expect_identical(map(1:2, list, .x := "foo"), exp)
 })
