@@ -78,7 +78,10 @@ SEXP map_impl(SEXP env, SEXP x_name_, SEXP f_name_, SEXP type_) {
   // actual values for f or x, because they may be long, which creates
   // bad tracebacks()
   SEXP Xi = PROTECT(Rf_lang3(R_Bracket2Symbol, x, i));
-  SEXP f_call = PROTECT(Rf_lang3(f, Xi, R_DotsSymbol));
+
+  SEXP dots = Rf_cons(R_DotsSymbol, R_NilValue);
+  SEXP args = Rf_cons(Xi, dots);
+  SEXP f_call = PROTECT(Rf_lcons(f, args));
 
   SEXP out = PROTECT(call_loop(env, f_call, n, type, 1));
   copy_names(x_val, out);
