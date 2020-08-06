@@ -180,16 +180,17 @@ partial <- function(.f,
     abort("Can't supply multiple `... = ` arguments.")
   }
 
+  # Reuse function symbol if possible
+  fn_sym <- if (is_symbol(fn_expr)) fn_expr else quote(.fn)
+
   body <- expr({
-    .fn <- !!.fn
-    .fn(!!!args)
+    !!fn_sym <- !!.fn
+    !!call2(fn_sym, !!!args)
   })
 
   structure(
     new_function(fmls, body, env = env),
-    class = c("purrr_function_partial", "function"),
-    fn = fn_expr,
-    fmls = fmls
+    class = c("purrr_function_partial", "function")
   )
 }
 
@@ -197,15 +198,12 @@ partial <- function(.f,
 print.purrr_function_partial <- function(x, ...) {
   cat("<partialised>\n")
 
-  body <- partialised_body(x)
-  body[[1]] <- partialised_fn(x)
-  body(x) <- body
-
+  body(x) <- partialised_body(x)
   print(x, ...)
 }
 
+# Skip first expression that assigns the function in the execution environment
 partialised_body <- function(x) node_car(node_cddr(body(x)))
-partialised_fn <- function(x) attr(x, "fn")
 
 # Avoid interference from `rlang::as_closure()` arguments
 fix_primitive_fmls <- function(args, fmls_args) {
