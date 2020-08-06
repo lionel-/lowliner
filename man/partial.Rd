@@ -50,7 +50,7 @@ compact2 <- partial(discard, .p = is.null)
 # evaluation
 my_long_variable <- 1:10
 plot2 <- partial(plot, my_long_variable)
-plot2()
+plot2(10:1)
 plot2(runif(10), type = "l")
 
 # Note that you currently can't partialise arguments multiple times:

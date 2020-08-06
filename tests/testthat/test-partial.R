@@ -2,7 +2,7 @@ context("partial")
 
 test_that("dots are correctly placed in the signature", {
   out <- partialised_body(partial(runif, n = rpois(1, 5)))
-  exp <- quo(.fn(n = rpois(1, 5), ...))
+  exp <- expr(.fn(n = rpois(1, 5), min = min, max = max))
   expect_identical(out, exp)
 })
 
@@ -21,6 +21,11 @@ test_that("no lazy evaluation means arguments aren't repeatedly evaluated", {
 test_that("partial() still works with functions using `missing()`", {
   fn <- function(x) missing(x)
   expect_false(partial(fn, x = 3)())
+
+  fn <- function(x, y) missing(y)
+  expect_true(partial(fn)())
+  expect_true(partial(fn, x = 1)())
+  expect_false(partial(fn, x = 1, y = 2)())
 })
 
 test_that("partialised arguments are evaluated in their environments", {
@@ -45,26 +50,23 @@ test_that("partialised function is evaluated in its environment", {
   expect_identical(partialised(), "foo")
 })
 
-test_that("partial() supports quosures", {
-  arg <- local({
-    n <- 0
-    quo({ n <<- n + 1; n})
-  })
-
-  fn <- partial(list, !!arg)
-  expect_identical(fn(), list(1))
-  expect_identical(fn(), list(2))
-})
-
 test_that("partial() matches argument with primitives", {
   minus <- partial(`-`, .y = 5)
+  expect_identical(minus(1), -4)
+
+  minus <- partial(`-`, e2 = 5)
   expect_identical(minus(1), -4)
 })
 
 test_that("partial() squashes quosures before printing", {
   expect_known_output(file = test_path("test-partial-print.txt"), {
     foo <- function(x, y) y
-    print(partial(foo, y = 3))
+    foo <- partial(foo, y = 3)
+
+    # Reproducible environment tag
+    environment(foo) <- global_env()
+
+    print(foo)
   })
 })
 
@@ -115,6 +117,60 @@ test_that("partial() supports lexically defined methods in the def env", {
   })
 })
 
+test_that("partial() updates formals list (#681, #690)", {
+  fn <- function(x, y) NULL
+  expect_identical(formals(partial(fn, x = 1)), pairlist2(y = ))
+  expect_identical(formals(partial(fn, y = 1)), pairlist2(x = ))
+  expect_identical(formals(partial(fn, x = 1, y = 1)), NULL)
+
+
+  fn <- function(x = 1, ..., y = 2, z = 3) list(x = x, y = y, z = z, ...)
+
+  out <- partial(fn, ... = )
+  expect_identical(formals(out), pairlist2(x = 1, ... = , y = 2, z = 3))
+  expect_identical(out("foo"), list(x = "foo", y = 2, z = 3))
+
+  out <- partial(fn, ... = , x = 10)
+  expect_identical(formals(out), pairlist2(... = , y = 2, z = 3))
+  expect_identical(out("foo"), list(x = 10, y = 2, z = 3, "foo"))
+
+  out <- partial(fn, ... = , x = 10)
+  expect_identical(formals(out), pairlist2(... = , y = 2, z = 3))
+  expect_identical(out("foo"), list(x = 10, y = 2, z = 3, "foo"))
+
+  out <- partial(fn, x = 10, ... = )
+  expect_identical(formals(out), pairlist2(... = , y = 2, z = 3))
+  expect_identical(out("foo"), list(x = 10, y = 2, z = 3, "foo"))
+
+  out <- partial(fn, y = 10, ... = , z = 20)
+  expect_identical(formals(out), pairlist2(x = 1, ... = ))
+  expect_identical(out("foo"), list(x = "foo", y = 10, z = 20))
+
+  out <- partial(fn, x = 10, ... = , z = 20)
+  expect_identical(formals(out), pairlist2(... = , y = 2))
+  expect_identical(out("foo"), list(x = 10, y = 2, z = 20, "foo"))
+
+  out <- partial(fn, foobar = 10, ... = , quuxbaz = 20)
+  expect_identical(formals(out), formals(fn))
+  expect_identical(out("foo"), list(x = "foo", y = 2, z = 3, foobar = 10, quuxbaz = 20))
+
+  out <- partial(fn, foobar = 10, ... = , quuxbaz = 20, x = 30)
+  expect_identical(formals(out), pairlist2(... = , y = 2, z = 3))
+  expect_identical(out("foo"), list(x = 30, y = 2, z = 3, foobar = 10, "foo", quuxbaz = 20))
+})
+
+test_that("partial() arguments can refer to default arguments (#743)", {
+  my_plus <- function(x, y) x + y
+
+  my_plus_default <- function(x) my_plus(x, y = rep(0, length(x)))
+  my_plus_partial <- partial(my_plus, ... = , y = rep(0, length(x)))
+
+  expect_identical(
+    my_plus_default(x = 1:10),
+    my_plus_partial(x = 1:10)
+  )
+})
+
 
 # Life cycle --------------------------------------------------------------
 
@@ -136,14 +192,27 @@ test_that("`.lazy` still works", {
 test_that("`.first` still works", {
   scoped_options(lifecycle_disable_warnings = TRUE)
   out <- partialised_body(partial(runif, n = rpois(1, 5), .first = FALSE))
-  exp <- quo(.fn(..., n = rpois(1, 5)))
+  exp <- expr(.fn(min = min, max = max, n = rpois(1, 5)))
   expect_identical(out, exp)
 
   # partial() also works without partialised arguments
-  expect_identical(partialised_body(partial(runif, .first = TRUE)), quo(.fn(...)))
-  expect_identical(partialised_body(partial(runif, .first = FALSE)), quo(.fn(...)))
+  expect_identical(partialised_body(partial(runif, .first = TRUE)), expr(.fn(n = n, min = min, max = max)))
+  expect_identical(partialised_body(partial(runif, .first = FALSE)), expr(.fn(n = n, min = min, max = max)))
 })
 
 test_that("`...f` still works", {
   expect_error(partial(...f = list, x = "foo"), "renamed", class = "defunctError")
+})
+
+test_that("partial() still supports quosures", {
+  scoped_options(lifecycle_disable_warnings = TRUE)
+
+  arg <- local({
+    n <- 0
+    quo({ n <<- n + 1; n})
+  })
+
+  fn <- partial(list, !!arg)
+  expect_identical(fn(), list(1))
+  expect_identical(fn(), list(2))
 })

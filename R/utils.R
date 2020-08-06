@@ -321,3 +321,68 @@ vec_simplify <- function(x) {
     vctrs::vec_c(!!!x)
   )
 }
+
+seq0 <- function(from, to) {
+  if (length(from) != 1) {
+    abort("`from` must be length one")
+  }
+  if (length(to) != 1) {
+    abort("`to` must be length one")
+  }
+
+  if (from > to) {
+    abort("Can't create decreasing sequence")
+  }
+
+  seq.int(from, to)
+}
+
+vec_partition <- function(x, runs) {
+  runs <- vec_cast(runs, integer())
+
+  runs_size <- length(runs)
+  if (!runs_size) {
+    return(list(x))
+  }
+
+  x_size <- vec_size(x)
+  runs <- sort(runs)
+
+  last_run <- runs[[runs_size]]
+  if (last_run > x_size) {
+    abort("`runs` can't exceed the vector size.")
+  }
+  if (last_run != x_size) {
+    # Ensure a full partition of `x`
+    runs <- c(runs, x_size)
+  }
+
+  out <- vec_init(list(), runs_size)
+  first <- 1L
+
+  for (i in seq_along(runs)) {
+    last <- runs[[i]]
+    out[[i]] <- vec_slice(x, seq0(first, last))
+    first <- last + 1L
+  }
+
+  out
+}
+
+vec_detect_runs <- function(x) {
+  n <- vec_size(x)
+  if (!n) {
+    return(int())
+  }
+
+  diffs <- vec_slice(x, -1L) != vec_slice(x, -n)
+  c(diffs, TRUE)
+}
+vec_locate_runs <- function(x) {
+  which(vec_detect_runs(x))
+}
+
+quo_is_same_env <- function(x, env) {
+  quo_env <- quo_get_env(x)
+  is_reference(quo_env, env) || is_reference(quo_env, empty_env())
+}
